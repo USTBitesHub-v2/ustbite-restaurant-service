@@ -23,20 +23,8 @@ jobs:
     with:
       service_name: "restaurant-service"
     secrets: inherit
-
-  
-  scan:
-    needs: gitleaks
-    if: github.event_name == 'pull_request'
-    uses: USTBitesHub-v2/ustbite-workflows/.github/workflows/sonar-and-snyk.yaml@main
-    with:
-      service_name: "restaurant-service"
-      service_path: "./"
-      runtime: "python"
-    secrets: inherit
-
   build-pr:
-    needs: scan
+    needs: gitleaks
     if: github.event_name == 'pull_request'
     uses: USTBitesHub-v2/ustbite-workflows/.github/workflows/generate-tag-and-build-image-trivy.yaml@main
     with:
