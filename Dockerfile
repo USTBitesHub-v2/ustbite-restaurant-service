@@ -1,0 +1,19 @@
+FROM python:3.11-slim AS builder
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+FROM python:3.11-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/* \
+    && addgroup --gid 1001 appgroup \
+    && adduser --uid 1001 --ingroup appgroup --no-create-home --disabled-password appuser
+COPY --from=builder /install /usr/local
+COPY --chown=0:0 --chmod=0555 ./alembic ./alembic
+COPY --chown=0:0 --chmod=0444 ./alembic.ini ./alembic.ini
+COPY --chown=appuser:appgroup ./app ./app
+COPY --chown=appuser:appgroup ./scripts ./scripts
+USER appuser
+EXPOSE 8002
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
